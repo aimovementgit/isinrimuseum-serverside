@@ -26,7 +26,7 @@ app.use(cookieParser());
 app.use(cors({origin: allowedOrigins, credentials: true}));
 
 // middleware - helmet is a security middleare that helps protect your app by setting various HTTP headers
-app.use(helmet());
+//app.use(helmet());
 
 //Morgan logs your request to the console
 app.use(morgan("dev"));
