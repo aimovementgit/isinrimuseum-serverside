@@ -91,23 +91,23 @@ export const login = async (req, res) => {
         // Generate JWT token
         const token = jwt.sign({ id: user[0].id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
-        // Set cookie with token
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
-        
+        //Set cookie with token
         // res.cookie("token", token, {
         //     httpOnly: true,
         //     secure: process.env.NODE_ENV === "production",
         //     sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
-        //     domain: process.env.COOKIE_DOMAIN, // Add this if needed
-        //     path: "/",  // Ensure cookie is available across your site
         //     maxAge: 7 * 24 * 60 * 60 * 1000
         // });
-        
+
+        // In both login and register functions:
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: true, // Always use secure cookies
+            sameSite: "None", // More compatible setting across browsers
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+
 
         return res.json({ success: true, message: "Login successful" });
     } catch (error) {
@@ -135,29 +135,29 @@ export const sendVerifyOtp = async (req, res) => {
     try {
         // Extract token from cookies
         const token = req.cookies.token;
-        
+
         if (!token) {
             return res.json({ success: false, message: "Authentication required" });
         }
-        
+
         // Verify and decode the token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        
+
         // Get user ID from decoded token
         const userId = decoded.id;
-        
+
         // Fetch user details from database using the ID from token
         const userResult = await sql`
             SELECT * FROM users WHERE id=${userId}
         `;
-        
+
         if (userResult.length === 0) {
             return res.json({ success: false, message: "User not found" });
         }
-        
+
         const user = userResult[0];
         const email = user.email;
-        
+
         // Check if account is already verified
         if (user.isaccountverified) {
             return res.json({ success: false, message: "Account already verified" });
@@ -187,24 +187,24 @@ export const sendVerifyOtp = async (req, res) => {
 
         // Log email sending attempt for debugging
         console.log(`Attempting to send verification email to: ${email}`);
-        
+
         // Send the email
         const info = await transporter.sendMail(mailOptions);
         console.log("Verification email sent successfully:", info.response);
-        
-        return res.json({ 
-            success: true, 
+
+        return res.json({
+            success: true,
             message: "OTP sent successfully on your email",
             userId: userId // Include userId in response for the frontend
         });
     } catch (error) {
         console.error("Error sending verification OTP:", error);
-        
+
         // Handle token verification errors specifically
         if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
             return res.json({ success: false, message: "Authentication failed. Please login again." });
         }
-        
+
         res.json({ success: false, message: error.message });
     }
 }
@@ -278,6 +278,40 @@ export const isAuthenticated = async (req, res) => {
         res.json({ success: false, message: error.message });
     }
 }
+
+// export const isAuthenticated = async (req, res) => {
+//     try {
+//         // Check if token exists
+//         const token = req.cookies.token;
+//         if (!token) {
+//             return res.json({ success: false, message: "No authentication token found" });
+//         }
+
+//         // Verify token
+//         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+//         // Check if user exists
+//         const user = await sql`SELECT * FROM users WHERE id=${decoded.id}`;
+//         if (user.length === 0) {
+//             return res.json({ success: false, message: "User not found" });
+//         }
+
+//         return res.json({ 
+//             success: true, 
+//             message: "User is authenticated",
+//             user: {
+//                 id: user[0].id,
+//                 name: user[0].name,
+//                 email: user[0].email,
+//                 accountType: user[0].accounttype,
+//                 isVerified: user[0].isaccountverified
+//             }
+//         });
+//     } catch (error) {
+//         return res.json({ success: false, message: "Authentication failed" });
+//     }
+// }
+
 
 //send password reset otp
 export const sendResetOtp = async (req, res) => {

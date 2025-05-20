@@ -23,7 +23,7 @@ const allowedOrigins = ['http://localhost:3001', 'https://isinrimuseum-serversid
 
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({origin: allowedOrigins, credentials: true}));
+app.use(cors({origin: allowedOrigins, withCredentials: true}));
 
 // middleware - helmet is a security middleare that helps protect your app by setting various HTTP headers
 app.use(helmet());
