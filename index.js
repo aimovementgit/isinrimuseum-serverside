@@ -19,7 +19,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const __dirname = path.resolve();
 
-const allowedOrigins = ['http://localhost:3001','https://isinrimuseum-serverside.onrender.com', 'https://isinrimuseum.org/'];
+const allowedOrigins = ['http://localhost:3001','https://isinrimuseum-serverside.onrender.com/', 'https://isinrimuseum.org/'];
 
 app.use(express.json());
 app.use(cookieParser());
