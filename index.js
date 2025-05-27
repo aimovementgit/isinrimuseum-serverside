@@ -9,7 +9,8 @@ import path from "path";
 import productsRoutes from "./routes/productRoutes.js";
 import authRouter from "./routes/authRoute.js";
 import userRouter from "./routes/userRoute.js"
-//import { aj } from "./lib/arcjet.js"
+import gelleryRouter from "./routes/galleryRoute.js"
+import { aj } from "./lib/arcjet.js"
 
 
 import { sql } from "./config/db.js";
@@ -48,45 +49,46 @@ app.use(cookieParser());
 //app.use(cors({origin: allowedOrigins, credentials: true}));
 
 // middleware - helmet is a security middleare that helps protect your app by setting various HTTP headers
-//app.use(helmet());
+app.use(helmet());
 
 //Morgan logs your request to the console
 app.use(morgan("dev"));
 
 // apply arcjet rate-limit to all routes
-// app.use(async (req,res,next) =>{
-//     try {
-//         const decision = await aj.protect(req, {
-//             requested:1 //specifies that each request consumes 1 token
-//         });
+app.use(async (req,res,next) =>{
+    try {
+        const decision = await aj.protect(req, {
+            requested:1 //specifies that each request consumes 1 token
+        });
         
-//         if(decision.isDenied()){
-//             if(decision.isRateLimit ) {
-//                 res.status(429).json({error: "Too Many Requests, Try Again Later"});
-//             }else if(decision.reason.isBot()) {
-//                 res.status(403).json({ error: " Bot access denied" });
-//             }else {
-//                 res.status(403).json({error: "Forbidden"})
-//             }
-//             return
-//         }
-//             //check for spoofed bots
-//             if (decision.results.some((result) => result.reason.isBot() && result.reason.isSpoofed())){
-//                 res.status(403).json({ error: "Spoofed bot detected" });
-//                 return
-//             }
+        if(decision.isDenied()){
+            if(decision.isRateLimit ) {
+                res.status(429).json({error: "Too Many Requests, Try Again Later"});
+            }else if(decision.reason.isBot()) {
+                res.status(403).json({ error: " Bot access denied" });
+            }else {
+                res.status(403).json({error: "Forbidden"})
+            }
+            return
+        }
+            //check for spoofed bots
+            if (decision.results.some((result) => result.reason.isBot() && result.reason.isSpoofed())){
+                res.status(403).json({ error: "Spoofed bot detected" });
+                return
+            }
 
-//             next()
+            next()
         
-//     } catch (error) {
-//         console.log("Arcjet error", error)
-//         next(error)
-//     }
-// });
+    } catch (error) {
+        console.log("Arcjet error", error)
+        next(error)
+    }
+});
 
 app.use("/api/products", productsRoutes);
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
+app.use("/api/gellery", gelleryRouter);
 
 async function initDB() {
     try {
@@ -121,6 +123,19 @@ async function initDB() {
         additionalinfo VARCHAR(225) NOT NULL,
         instock VARCHAR(225) NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        `;
+
+        await sql`
+        CREATE TABLE IF NOT EXISTS gallery (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(225) NOT NULL UNIQUE,
+            price DECIMAL(10, 2) NOT NULL,
+            featuredimage VARCHAR(225) NOT NULL,
+            description VARCHAR(225) NOT NULL,
+            yearcollected INTEGER NOT NULL DEFAULT 0,
+            artist VARCHAR(225) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         `;
         console.log('database created!!!')

@@ -6,7 +6,7 @@ export const getProducts = async (req, res) => {
     SELECT * FROM products ORDER BY created_at DESC
     `;
 
-        console.log("fetched products", products)
+        //console.log("fetched products", products)
         res.status(200).json({ success: true, data: products })
     } catch (error) {
         console.log("error in getProduct function")
@@ -26,7 +26,7 @@ export const createProduct = async (req, res) => {
         VALUES (${name},${price},${categories},${quantity},${featuredimage},${images1},${images2},${images3},${images4},${description},${additionalinfo}, ${instock})
         RETURNING *
         `
-        console.log("new product added", newProduct)
+        //console.log("new product added", newProduct)
 
         res.status(201).json({ success: true, data: newProduct[0] })
     } catch (error) {

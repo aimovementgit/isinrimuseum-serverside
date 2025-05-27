@@ -104,9 +104,9 @@ export const login = async (req, res) => {
             httpOnly: true,
             secure: true, // Always use secure cookies
             sameSite: "None", // More compatible setting across browsers
-            maxAge: 7 * 24 * 60 * 60 * 1000
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            path: '/',
         });
-
 
 
         return res.json({ success: true, message: "Login successful" });
