@@ -10,6 +10,7 @@ import productsRoutes from "./routes/productRoutes.js";
 import authRouter from "./routes/authRoute.js";
 import userRouter from "./routes/userRoute.js"
 import gelleryRouter from "./routes/galleryRoute.js"
+import exhibitionRouter from "./routes/exhibitionRoute.js"
 import { aj } from "./lib/arcjet.js"
 
 
@@ -23,27 +24,27 @@ const __dirname = path.resolve();
 // Fix the allowed origins (remove trailing slashes)
 const allowedOrigins = [
     'http://localhost:3001',
-    'https://isinrimuseum-serverside.onrender.com', 
+    'https://isinrimuseum-serverside.onrender.com',
     'https://isinrimuseum.org'
-  ];
-  
-  // Implement a more robust CORS configuration
-  app.use(cors({
-    origin: function(origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-      
-      if (allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
+];
+
+// Implement a more robust CORS configuration
+app.use(cors({
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-  }));
-  
+}));
+
 app.use(express.json());
 app.use(cookieParser());
 //app.use(cors({origin: allowedOrigins, credentials: true}));
@@ -55,30 +56,30 @@ app.use(helmet());
 app.use(morgan("dev"));
 
 // apply arcjet rate-limit to all routes
-app.use(async (req,res,next) =>{
+app.use(async (req, res, next) => {
     try {
         const decision = await aj.protect(req, {
-            requested:1 //specifies that each request consumes 1 token
+            requested: 1 //specifies that each request consumes 1 token
         });
-        
-        if(decision.isDenied()){
-            if(decision.isRateLimit ) {
-                res.status(429).json({error: "Too Many Requests, Try Again Later"});
-            }else if(decision.reason.isBot()) {
+
+        if (decision.isDenied()) {
+            if (decision.isRateLimit) {
+                res.status(429).json({ error: "Too Many Requests, Try Again Later" });
+            } else if (decision.reason.isBot()) {
                 res.status(403).json({ error: " Bot access denied" });
-            }else {
-                res.status(403).json({error: "Forbidden"})
+            } else {
+                res.status(403).json({ error: "Forbidden" })
             }
             return
         }
-            //check for spoofed bots
-            if (decision.results.some((result) => result.reason.isBot() && result.reason.isSpoofed())){
-                res.status(403).json({ error: "Spoofed bot detected" });
-                return
-            }
+        //check for spoofed bots
+        if (decision.results.some((result) => result.reason.isBot() && result.reason.isSpoofed())) {
+            res.status(403).json({ error: "Spoofed bot detected" });
+            return
+        }
 
-            next()
-        
+        next()
+
     } catch (error) {
         console.log("Arcjet error", error)
         next(error)
@@ -89,6 +90,7 @@ app.use("/api/products", productsRoutes);
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/gellery", gelleryRouter);
+app.use("/api/exhibition", exhibitionRouter);
 
 async function initDB() {
     try {
@@ -138,6 +140,27 @@ async function initDB() {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         `;
+        await sql`
+    CREATE TABLE IF NOT EXISTS exhibition (
+        id SERIAL PRIMARY KEY,
+        featuredimage VARCHAR(1000) NOT NULL,
+        title VARCHAR(255) NOT NULL UNIQUE,
+        description TEXT NOT NULL,
+        start_time TIME NOT NULL,
+        end_time TIME NOT NULL,
+        exhibition_date DATE NOT NULL,
+        phonenumber VARCHAR(20) NOT NULL,
+        photo1 VARCHAR(1000),
+        photo2 VARCHAR(1000),
+        photo3 VARCHAR(1000),
+        photo4 VARCHAR(1000),
+        location VARCHAR(500) NOT NULL,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    `;
+
         console.log('database created!!!')
     } catch (error) {
         console.log("Error initDB is here", error);
