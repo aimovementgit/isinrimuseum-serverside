@@ -29,7 +29,8 @@ const allowedOrigins = [
     'http://localhost:3001',
     'https://isinrimuseum-serverside.onrender.com',
     'https://isinrimuseum.org',
-    'http://localhost:5173'
+    'http://localhost:5173',
+    'https://kachi-james-initiative-training.vercel.app'
 ];
 
 // Implement a more robust CORS configuration
